@@ -4,9 +4,10 @@ from discord.ext import commands
 from dotenv import dotenv_values
 
 config = dotenv_values(".env")
-
-client = commands.Bot(command_prefix="!")
+intents = discord.Intents.all()
+client = commands.Bot(command_prefix="!", intents=intents)
 musicPlayer = mp.MusicPlayer(client)
+
 
 @client.command()
 async def play(ctx, *args):
