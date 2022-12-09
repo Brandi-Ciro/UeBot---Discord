@@ -3,6 +3,17 @@ from youtube_dl import YoutubeDL
 from discord import FFmpegPCMAudio
 
 
+def search(query: str):
+    with YoutubeDL({'noplaylist': 'True'}) as ydl:
+        try:
+            requests.get(query)
+        except:
+            info = ydl.extract_info(f"ytsearch:{query}", download=False)['entries'][0]
+        else:
+            info = ydl.extract_info(query, download=False)
+    return info, info['formats'][0]['url']
+
+
 class MusicPlayer:
 
     def __init__(self, bot):
@@ -11,8 +22,9 @@ class MusicPlayer:
         self._bot = bot
         self._ctx = None
         self._voiceClient = None
-        self._ffmpegOpts = {'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5',
-                            'options': '-vn'}
+        self._ffmpegOpts = {
+            'before_options': '-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5', 'options': '-vn'
+        }
 
     @property
     def ffmpegOpts(self):
@@ -54,16 +66,6 @@ class MusicPlayer:
     def voiceClient(self, value):
         self._voiceClient = value
 
-    def search(self, query: str):
-        with YoutubeDL({'noplaylist': 'True'}) as ydl:
-            try:
-                requests.get(query)
-            except:
-                info = ydl.extract_info(f"ytsearch:{query}", download=False)['entries'][0]
-            else:
-                info = ydl.extract_info(query, download=False)
-        return info, info['formats'][0]['url']
-
     def add_song(self, url: str):
         self._queue.append(url)
 
@@ -79,11 +81,11 @@ class MusicPlayer:
 
     def play_song(self, url: str):
         voice = self._voiceClient
-        video, source = self.search(url)
+        video, source = search(url)
         if not voice.is_playing():
             voice.play(FFmpegPCMAudio(source, **self._ffmpegOpts), after=self.play_next_song)
-            self._ctx.send(f'Playing {url}')
             self.remove_song()
+        return video
 
     def play_next_song(self, error):
         if not self.isStopped:
